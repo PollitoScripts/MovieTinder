@@ -170,9 +170,20 @@ function App() {
           </div>
           
           <div className="genre-bar">
-            <button className={`genre-tag ${genreFilter === '' ? 'active' : ''}`} onClick={() => setGenreFilter('')}>Todos</button>
+            <button 
+              className={`genre-tag ${genreFilter === '' ? 'active' : ''}`} 
+              onClick={() => setGenreFilter('')}
+            >
+              Todos
+            </button>
             {Object.entries(GENRES).map(([name, id]) => (
-              <button key={id} className={`genre-tag ${genreFilter === id ? 'active' : ''}`} onClick={() => setGenreFilter(id)}>{name}</button>
+              <button 
+                key={id} 
+                className={`genre-tag ${genreFilter === id ? 'active' : ''}`} 
+                onClick={() => setGenreFilter(id)}
+              >
+                {name}
+              </button>
             ))}
           </div>
 
