@@ -457,3 +457,64 @@ h1 {
   width: 50px;
   border-radius: 8px;
 }
+
+/* --- AJUSTES PARA MÓVILES PEQUEÑOS --- */
+@media (max-height: 740px) {
+  .app {
+    padding: 10px;
+  }
+
+  h1 {
+    margin-bottom: 5px;
+    font-size: 0.6rem;
+  }
+
+  .filter-bar {
+    margin-bottom: 5px;
+  }
+
+  .filter-btn {
+    width: 38px;
+    height: 38px;
+  }
+
+  .genre-bar {
+    margin-bottom: 8px;
+    padding: 5px 10px;
+  }
+
+  /* Reducimos la carta para que respire el diseño */
+  .cardContainer, .card {
+    width: 260px;
+    height: 370px;
+  }
+
+  .info-section {
+    min-height: 70px;
+    margin-top: 5px;
+  }
+
+  .info-section h2 {
+    font-size: 1.1rem;
+  }
+
+  .info-meta {
+    font-size: 0.75rem;
+    gap: 8px;
+  }
+
+  /* Botones de acción un poco más pequeños */
+  .btn-circle {
+    width: 50px;
+    height: 50px;
+    font-size: 1.2rem;
+  }
+
+  .action-buttons {
+    gap: 20px;
+  }
+
+  .watermark {
+    padding-bottom: 5px;
+  }
+}
