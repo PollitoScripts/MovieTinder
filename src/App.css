@@ -120,7 +120,7 @@ h1 {
   touch-action: none;
 }
 
-/* --- SECCIÓN DE INFORMACIÓN (TÍTULO Y GÉNEROS) --- */
+/* --- SECCIÓN DE INFORMACIÓN --- */
 .info-section {
   width: 100%;
   text-align: center;
@@ -200,8 +200,75 @@ h1 {
 
 .btn-reject { color: var(--reject-color); border-color: rgba(255, 77, 77, 0.3); }
 .btn-heart { color: var(--match-color); border-color: rgba(46, 204, 113, 0.3); }
-
 .btn-circle:active { transform: scale(0.9); }
+
+/* --- BARRA DE GÉNEROS Y NAVEGACIÓN PC --- */
+.genre-container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.genre-bar {
+  display: flex;
+  overflow-x: auto;
+  gap: 10px;
+  width: 100%;
+  padding: 5px 15px;
+  margin-bottom: 15px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  flex-shrink: 0;
+}
+
+.genre-bar::-webkit-scrollbar { display: none; }
+
+.genre-tag {
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  padding: 6px 15px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.genre-tag.active {
+  background: white;
+  color: black;
+  font-weight: bold;
+}
+
+/* Botones laterales solo para PC */
+.scroll-btn {
+  display: none;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-130%);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 5;
+  font-size: 1.2rem;
+  transition: all 0.2s;
+}
+
+.scroll-btn.left { left: -5px; }
+.scroll-btn.right { right: -5px; }
+
+@media (min-width: 1024px) {
+  .scroll-btn { display: flex; justify-content: center; align-items: center; }
+  .genre-bar { padding: 5px 35px; }
+}
 
 /* --- OTROS ELEMENTOS --- */
 .watermark {
@@ -258,19 +325,6 @@ h1 {
   cursor: pointer;
 }
 
-.info-hint {
-  position: absolute;
-  bottom: 15px;
-  width: 100%;
-  text-align: center;
-  font-size: 0.6rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.5);
-  letter-spacing: 1px;
-  pointer-events: none;
-}
-
 /* --- PANEL DE DETALLES --- */
 .details-panel {
   position: fixed;
@@ -324,136 +378,48 @@ h1 {
   overflow-y: auto;
 }
 
-/* --- SETUP / LOGIN --- */
+/* --- SETUP / MATCH / HISTORIAL --- */
 .setup-screen {
   display: flex;
-  flex-direction: column;
-  gap: 20px;
-  text-align: center;
-  padding: 40px;
+  flex-direction: column; gap: 20px; text-align: center; padding: 40px;
 }
-
 .setup-screen input {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  padding: 15px;
-  border-radius: 12px;
-  color: white;
-  text-align: center;
-  font-weight: 800;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  padding: 15px; border-radius: 12px; color: white; text-align: center; font-weight: 800;
 }
-
 .room-indicator {
-  position: absolute;
-  top: 10px;
-  right: 20px;
-  font-size: 0.6rem;
-  font-weight: 900;
-  color: var(--primary-red);
-  cursor: pointer;
+  position: absolute; top: 10px; right: 20px; font-size: 0.6rem; font-weight: 900; color: var(--primary-red); cursor: pointer;
 }
-
-/* --- MATCH OVERLAY --- */
 .match-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.9);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; display: flex; align-items: center; justify-content: center;
 }
-
 .match-content {
-  text-align: center;
-  padding: 40px;
-  background: var(--bg-color-1);
-  border-radius: 30px;
-  border: 2px solid var(--match-color);
-  box-shadow: 0 0 50px rgba(46, 204, 113, 0.4);
+  text-align: center; padding: 40px; background: var(--bg-color-1); border-radius: 30px;
+  border: 2px solid var(--match-color); box-shadow: 0 0 50px rgba(46, 204, 113, 0.4);
 }
-
-/* --- BARRA DE GÉNEROS --- */
-.genre-bar {
-  display: flex;
-  overflow-x: auto; /* Permite el scroll horizontal */
-  gap: 10px;
-  width: 100%;
-  padding: 5px 15px; /* Un poco más de padding lateral para que no toque el borde */
-  margin-bottom: 15px;
-  scrollbar-width: none; /* Oculta scroll en Firefox */
-  -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
-  flex-shrink: 0; /* Evita que la propia barra se colapse */
-}
-
-.genre-bar::-webkit-scrollbar { 
-  display: none; /* Oculta scroll en Chrome/Safari */
-}
-
-.genre-tag {
-  flex-shrink: 0; /* CLAVE: Impide que el botón se encoja para caber */
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: white;
-  padding: 6px 15px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  white-space: nowrap; /* Fuerza al texto a estar en una sola línea */
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.genre-tag.active {
-  background: white;
-  color: black;
-  font-weight: bold;
-}
-
-/* --- HISTORIAL --- */
 .history-toggle {
-  position: absolute;
-  top: 10px;
-  left: 20px;
-  background: none;
-  border: none;
-  font-size: 1.2rem;
-  cursor: pointer;
-  z-index: 10;
+  position: absolute; top: 10px; left: 20px; background: none; border: none; font-size: 1.2rem; cursor: pointer; z-index: 10;
 }
-
 .history-panel {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.85);
-  z-index: 2000;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 2000; display: flex; justify-content: center; align-items: center;
 }
-
 .history-content {
-  background: #1a1c23;
-  width: 85%;
-  max-width: 350px;
-  max-height: 70vh;
-  border-radius: 25px;
-  padding: 25px;
-  overflow-y: auto;
+  background: #1a1c23; width: 85%; max-width: 350px; max-height: 70vh; border-radius: 25px; padding: 25px; overflow-y: auto;
 }
+.history-content li { display: flex; gap: 15px; margin-bottom: 15px; align-items: center; list-style: none; }
+.history-content li img { width: 50px; border-radius: 8px; }
 
-.history-content ul {
-  padding: 0;
-}
-
-.history-content li {
-  display: flex;
-  gap: 15px;
-  margin-bottom: 15px;
-  align-items: center;
-  list-style: none;
-}
-
-.history-content li img {
-  width: 50px;
-  border-radius: 8px;
+/* --- MEDIA QUERY MÓVILES PEQUEÑOS --- */
+@media (max-height: 740px) {
+  .app { padding: 10px; }
+  h1 { margin-bottom: 5px; font-size: 0.6rem; }
+  .filter-bar { margin-bottom: 5px; }
+  .filter-btn { width: 38px; height: 38px; }
+  .genre-bar { margin-bottom: 8px; padding: 5px 10px; }
+  .cardContainer, .card { width: 260px; height: 370px; }
+  .info-section { min-height: 70px; margin-top: 5px; }
+  .info-section h2 { font-size: 1.1rem; }
+  .info-meta { font-size: 0.75rem; gap: 8px; }
+  .btn-circle { width: 50px; height: 50px; font-size: 1.2rem; }
+  .action-buttons { gap: 20px; }
 }

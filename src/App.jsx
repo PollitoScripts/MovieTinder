@@ -34,6 +34,9 @@ function App() {
 
   const API_KEY = '16c30f7ff13ba7ee695e9bf5da8748cc'
 
+  // Ref para el scroll del carrusel
+  const scrollRef = useRef(null);
+
   const fetchMovies = (pFilter, gFilter) => {
     setLoading(true)
     let randomPage = Math.floor(Math.random() * (pFilter === '' ? 15 : 8)) + 1;
@@ -139,6 +142,14 @@ function App() {
     if ((Date.now() - touchStartTime.current) < 200 && moveX < 10) toggleDetail();
   };
 
+  // Función para scroll manual en PC
+  const scrollGenres = (direction) => {
+    if (scrollRef.current) {
+      const scrollAmount = direction === 'left' ? -200 : 200;
+      scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
+
   return (
     <div className='app'>
       {!roomId ? (
@@ -169,22 +180,26 @@ function App() {
             ))}
           </div>
           
-          <div className="genre-bar">
-            <button 
-              className={`genre-tag ${genreFilter === '' ? 'active' : ''}`} 
-              onClick={() => setGenreFilter('')}
-            >
-              Todos
-            </button>
-            {Object.entries(GENRES).map(([name, id]) => (
+          <div className="genre-container">
+            <button className="scroll-btn left" onClick={() => scrollGenres('left')}>‹</button>
+            <div className="genre-bar" ref={scrollRef}>
               <button 
-                key={id} 
-                className={`genre-tag ${genreFilter === id ? 'active' : ''}`} 
-                onClick={() => setGenreFilter(id)}
+                className={`genre-tag ${genreFilter === '' ? 'active' : ''}`} 
+                onClick={() => setGenreFilter('')}
               >
-                {name}
+                Todos
               </button>
-            ))}
+              {Object.entries(GENRES).map(([name, id]) => (
+                <button 
+                  key={id} 
+                  className={`genre-tag ${genreFilter === id ? 'active' : ''}`} 
+                  onClick={() => setGenreFilter(id)}
+                >
+                  {name}
+                </button>
+              ))}
+            </div>
+            <button className="scroll-btn right" onClick={() => scrollGenres('right')}>›</button>
           </div>
 
           <button className="history-toggle" onClick={() => setShowHistory(true)}>📜</button>
