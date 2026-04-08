@@ -52,12 +52,10 @@ function App() {
       .catch(() => setLoading(false))
   }
 
-  // Escuchar AMBOS filtros para recargar
   useEffect(() => { 
     fetchMovies(providerFilter, genreFilter) 
   }, [providerFilter, genreFilter])
 
-  // Lógica de Match e Historial
   useEffect(() => {
     if (roomId) {
       const likesRef = ref(db, `rooms/${roomId}/likes`)
@@ -73,7 +71,6 @@ function App() {
               const found = movies.find(m => m.id === like.movieId)
               if (found) {
                 setMatchMovie(found)
-                // Guardar en historial evitando duplicados
                 setMatchesHistory(prev => {
                   if (prev.find(m => m.id === found.id)) return prev
                   return [found, ...prev]
@@ -116,30 +113,21 @@ function App() {
 
   const joinRoom = () => {
     if (!roomInput) return;
-    
     const upperRoomId = roomInput.toUpperCase();
     const roomRef = ref(db, `rooms/${upperRoomId}`);
-
-    // Consultamos la sala una sola vez antes de entrar
     get(roomRef).then((snapshot) => {
       if (snapshot.exists()) {
-        // Si la sala existe, entramos
         setRoomId(upperRoomId);
       } else {
-        // Si no existe, avisamos al usuario y no hacemos nada
         alert("¡Vaya! Esa sala no existe. Revisa el código o crea una nueva.");
       }
-    }).catch((error) => {
-      console.error("Error al validar la sala:", error);
-      alert("Hubo un error al conectar con la base de datos.");
-    });
+    }).catch(() => alert("Error al conectar con la base de datos."));
   };
 
   const swipeAction = (dir) => { if (currentIndex < movies.length && cardRef.current) cardRef.current.swipe(dir) }
   const toggleDetail = () => setShowDetail(!showDetail)
   const currentMovie = movies[currentIndex]
 
-  // Manejo de toques
   const touchStartTime = useRef(0);
   const touchStartX = useRef(0);
   const handlePointerDown = (e) => {
@@ -172,7 +160,11 @@ function App() {
           <div className="filter-bar">
             {Object.keys(PROVIDERS).map(key => (
               <button key={key} className={`filter-btn ${providerFilter === PROVIDERS[key] ? 'active' : ''}`} onClick={() => setProviderFilter(PROVIDERS[key])}>
-                {key === 'todos' ? <span style={{fontSize:'0.65rem', fontWeight:'900'}}>ALL</span> : <img src={`/logos/${key}.png`} alt={key} className="provider-logo" />}
+                {key === 'todos' ? (
+                  <span style={{fontSize:'0.65rem', fontWeight:'900'}}>ALL</span>
+                ) : (
+                  <img src={`${import.meta.env.BASE_URL}logos/${key}.png`} alt={key} className="provider-logo" />
+                )}
               </button>
             ))}
           </div>
@@ -225,11 +217,19 @@ function App() {
 
           {!loading && currentMovie && (
             <div className="info-section">
-              <h2>{currentMovie.title}</h2>
+              <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', width: '100%'}}>
+                <h2 style={{margin: 0}}>{currentMovie.title}</h2>
+                <span className="info-rating">★ {currentMovie.vote_average.toFixed(1)}</span>
+              </div>
               <div className="info-meta">
-                <span className="rating">★ {currentMovie.vote_average.toFixed(1)}</span>
-                <span>•</span>
-                <span>{currentMovie.release_date?.split('-')[0]}</span>
+                <span className="movie-year">{currentMovie.release_date?.split('-')[0]}</span>
+                <span style={{color: '#444'}}>•</span>
+                <div className="movie-genres">
+                  {currentMovie.genre_ids && currentMovie.genre_ids.slice(0, 3).map(id => {
+                    const genreName = Object.keys(GENRES).find(key => GENRES[key] === id);
+                    return genreName ? <span key={id} className="genre-label">{genreName}</span> : null;
+                  })}
+                </div>
               </div>
             </div>
           )}
