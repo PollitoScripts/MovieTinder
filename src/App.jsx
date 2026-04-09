@@ -32,6 +32,7 @@ function App() {
   const [matchesHistory, setMatchesHistory] = useState([]) 
   const [showHistory, setShowHistory] = useState(false) 
   const [selectedHistoryMovie, setSelectedHistoryMovie] = useState(null);
+  const [viewedMovieIds, setViewedMovieIds] = useState(new Set())
 
   // --- NUEVO ESTADO PARA EL TRÁILER ---
   const [trailerUrl, setTrailerUrl] = useState(null)
@@ -59,18 +60,21 @@ function App() {
       .then(res => res.json())
       .then(data => {
         if (!data.results || data.results.length === 0) {
-           if (randomPage !== 1) fetchMovies(pFilter, gFilter); 
-           else {
-             setMovies([]);
-             setLoading(false);
-           }
+          // ... tu lógica de reintento ...
         } else {
-          setMovies(data.results);
-          setCurrentIndex(0);
-          setLoading(false);
+          // --- FILTRO AQUÍ ---
+          const newMovies = data.results.filter(movie => !viewedMovieIds.has(movie.id));
+          
+          if (newMovies.length === 0 && data.results.length > 0) {
+            // Si todas las de esta página ya las vimos, buscamos otra página automáticamente
+            fetchMovies(pFilter, gFilter);
+          } else {
+            setMovies(newMovies);
+            setCurrentIndex(0);
+            setLoading(false);
+          }
         }
       })
-      .catch(() => setLoading(false))
   }
 
   const fetchTrailer = (movieId) => {
@@ -141,6 +145,9 @@ function App() {
   }, [roomId, movies]);
 
   const swiped = (direction, movie) => {
+    // Guardamos que ya la hemos visto localmente
+    setViewedMovieIds(prev => new Set(prev).add(movie.id))
+
     if (direction === 'right' && roomId) {
       push(ref(db, `rooms/${roomId}/likes`), {
         user: userId,
