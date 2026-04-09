@@ -104,6 +104,7 @@ h1 {
 
 .swipe {
   position: absolute;
+  z-index: 10;
 }
 
 .card {
@@ -422,4 +423,75 @@ h1 {
   .info-meta { font-size: 0.75rem; gap: 8px; }
   .btn-circle { width: 50px; height: 50px; font-size: 1.2rem; }
   .action-buttons { gap: 20px; }
+}
+
+/* --- NUEVOS ESTILOS PARA TRÁILER, MODAL E INDICADORES --- */
+
+.btn-trailer {
+  color: #f1c40f !important;
+  border-color: rgba(241, 196, 15, 0.3) !important;
+  font-size: 1.2rem !important;
+}
+
+.trailer-content {
+  background: rgba(10, 10, 15, 0.8) !important;
+  backdrop-filter: blur(20px);
+  width: 90% !important;
+  max-width: 500px !important;
+  border-radius: 25px !important;
+  padding: 10px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.trailer-content iframe {
+  width: 100% !important;
+  aspect-ratio: 16/9 !important;
+  border-radius: 15px !important;
+  margin-bottom: 15px !important;
+}
+
+.close-trailer {
+  width: 100% !important;
+  margin-top: 0 !important;
+}
+
+/* Indicadores de fondo corregidos (detrás de la carta) */
+.swipe-bg-indicators {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 15px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.bg-indicator {
+  font-size: 5rem;
+  opacity: 0.12;
+  font-weight: bold;
+}
+
+.bg-indicator.left {
+  color: var(--reject-color);
+}
+
+.bg-indicator.right {
+  color: var(--match-color);
+}
+
+.history-content li:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  transform: scale(1.02);
+  transition: all 0.2s ease;
+}
+
+.history-content li img {
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
 }

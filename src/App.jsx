@@ -31,6 +31,10 @@ function App() {
   const [genreFilter, setGenreFilter] = useState('') 
   const [matchesHistory, setMatchesHistory] = useState([]) 
   const [showHistory, setShowHistory] = useState(false) 
+  const [selectedHistoryMovie, setSelectedHistoryMovie] = useState(null);
+
+  // --- NUEVO ESTADO PARA EL TRÁILER ---
+  const [trailerUrl, setTrailerUrl] = useState(null)
 
   const API_KEY = '16c30f7ff13ba7ee695e9bf5da8748cc'
 
@@ -39,28 +43,71 @@ function App() {
 
   const fetchMovies = (pFilter, gFilter) => {
     setLoading(true)
-    let randomPage = Math.floor(Math.random() * (pFilter === '' ? 15 : 8)) + 1;
+    let randomPage = Math.floor(Math.random() * (pFilter === '' ? 15 : 5)) + 1;
+    
     let url = `https://api.themoviedb.org/3/discover/movie?api_key=${API_KEY}&language=es-ES&region=ES&sort_by=popularity.desc&page=${randomPage}&watch_region=ES`
     
-    if (pFilter !== '') url += `&with_watch_providers=${pFilter}${pFilter === '283' ? '&with_genres=16' : ''}`
-    if (gFilter !== '') url += `&with_genres=${gFilter}`
+    if (pFilter === '283') {
+      url += `&with_watch_providers=283&with_genres=16`;
+      if (gFilter !== '') url += `,${gFilter}`;
+    } else {
+      if (pFilter !== '') url += `&with_watch_providers=${pFilter}`;
+      if (gFilter !== '') url += `&with_genres=${gFilter}`;
+    }
 
     fetch(url)
       .then(res => res.json())
       .then(data => {
-        setMovies(data.results || [])
-        setCurrentIndex(0)
-        setLoading(false)
+        if (!data.results || data.results.length === 0) {
+           if (randomPage !== 1) fetchMovies(pFilter, gFilter); 
+           else {
+             setMovies([]);
+             setLoading(false);
+           }
+        } else {
+          setMovies(data.results);
+          setCurrentIndex(0);
+          setLoading(false);
+        }
       })
       .catch(() => setLoading(false))
+  }
+
+  const fetchTrailer = (movieId) => {
+    const url = `https://api.themoviedb.org/3/movie/${movieId}/videos?api_key=${API_KEY}&language=es-ES`
+    
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        const trailer = data.results?.find(video => video.site === 'YouTube' && video.type === 'Trailer')
+        if (trailer) {
+          setTrailerUrl(`https://www.youtube.com/embed/${trailer.key}?autoplay=1`)
+        } else {
+          alert("¡Vaya! No hemos encontrado el tráiler para esta peli.")
+        }
+      })
+      .catch(() => alert("Error al conectar con la API de tráilers."))
   }
 
   useEffect(() => { 
     fetchMovies(providerFilter, genreFilter) 
   }, [providerFilter, genreFilter])
 
+  // --- LÓGICA DE MATCHES ACTUALIZADA (PERSISTENTE) ---
   useEffect(() => {
     if (roomId) {
+      // 1. Escuchar el historial de matches en Firebase (para que salga a todos al entrar)
+      const historyRef = ref(db, `rooms/${roomId}/matchesHistory`);
+      onValue(historyRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          // Convertimos el objeto de Firebase en array para el historial
+          const historyArray = Object.values(data).reverse(); 
+          setMatchesHistory(historyArray);
+        }
+      });
+
+      // 2. Escuchar likes para detectar nuevos matches
       const likesRef = ref(db, `rooms/${roomId}/likes`)
       onValue(likesRef, (snapshot) => {
         const data = snapshot.val()
@@ -73,18 +120,25 @@ function App() {
             if (movieIds[like.movieId].size > 1) {
               const found = movies.find(m => m.id === like.movieId)
               if (found) {
-                setMatchMovie(found)
-                setMatchesHistory(prev => {
-                  if (prev.find(m => m.id === found.id)) return prev
-                  return [found, ...prev]
-                })
+                // Verificamos en Firebase si este match ya está registrado
+                get(ref(db, `rooms/${roomId}/matchesHistory/${found.id}`)).then((snap) => {
+                  if (!snap.exists()) {
+                    // Si no existe, lo grabamos en Firebase para que sea persistente
+                    set(ref(db, `rooms/${roomId}/matchesHistory/${found.id}`), {
+                      ...found,
+                      matchedAt: Date.now()
+                    });
+                    // Mostramos el cartel solo al usuario que acaba de hacer el match
+                    setMatchMovie(found);
+                  }
+                });
               }
             }
           })
         }
       })
     }
-  }, [roomId, movies])
+  }, [roomId, movies]);
 
   const swiped = (direction, movie) => {
     if (direction === 'right' && roomId) {
@@ -142,7 +196,6 @@ function App() {
     if ((Date.now() - touchStartTime.current) < 200 && moveX < 10) toggleDetail();
   };
 
-  // Función para scroll manual en PC
   const scrollGenres = (direction) => {
     if (scrollRef.current) {
       const scrollAmount = direction === 'left' ? -200 : 200;
@@ -208,12 +261,25 @@ function App() {
             <div className="history-panel" onClick={() => setShowHistory(false)}>
               <div className="history-content" onClick={e => e.stopPropagation()}>
                 <h3>Vuestros Matches 🍿</h3>
-                {matchesHistory.length === 0 ? <p>Aún no hay coincidencias...</p> : (
+                {matchesHistory.length === 0 ? (
+                  <p>Aún no hay coincidencias...</p>
+                ) : (
                   <ul>
                     {matchesHistory.map((m, i) => (
-                      <li key={i}>
+                      <li 
+                        key={i} 
+                        onClick={() => {
+                          setSelectedHistoryMovie(m);
+                          setShowHistory(false);
+                          setShowDetail(true);
+                        }} 
+                        style={{ cursor: 'pointer' }}
+                      >
                         <img src={`https://image.tmdb.org/t/p/w92${m.poster_path}`} alt="poster" />
-                        <div><strong>{m.title}</strong><p>{m.release_date?.split('-')[0]}</p></div>
+                        <div>
+                          <strong>{m.title}</strong>
+                          <p>{m.release_date?.split('-')[0]}</p>
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -221,12 +287,32 @@ function App() {
                 <button className="reload-btn" onClick={() => setShowHistory(false)}>CERRAR</button>
               </div>
             </div>
-          )}  
+          )} 
 
           <div className='cardContainer'>
-            {loading ? <div className="loader">BUSCANDO...</div> : currentMovie ? (
-              <TinderCard ref={cardRef} className='swipe' key={currentMovie.id} onSwipe={(dir) => swiped(dir, currentMovie)} preventSwipe={['up', 'down']}>
-                <div style={{ backgroundImage: `url(https://image.tmdb.org/t/p/w500${currentMovie.poster_path})` }} className='card' onMouseDown={handlePointerDown} onMouseUp={handlePointerUp} onTouchStart={handlePointerDown} onTouchEnd={handlePointerUp}>
+            <div className="swipe-bg-indicators">
+              <span className="bg-indicator left">✕</span>
+              <span className="bg-indicator right">❤</span>
+            </div>
+
+            {loading ? (
+              <div className="loader">BUSCANDO...</div>
+            ) : currentMovie ? (
+              <TinderCard 
+                ref={cardRef} 
+                className='swipe' 
+                key={currentMovie.id} 
+                onSwipe={(dir) => swiped(dir, currentMovie)} 
+                preventSwipe={['up', 'down']}
+              >
+                <div 
+                  style={{ backgroundImage: `url(https://image.tmdb.org/t/p/w500${currentMovie.poster_path})` }} 
+                  className='card' 
+                  onMouseDown={handlePointerDown} 
+                  onMouseUp={handlePointerUp} 
+                  onTouchStart={handlePointerDown} 
+                  onTouchEnd={handlePointerUp}
+                >
                   <div className="info-hint">Toca para sinopsis ↓</div>
                 </div>
               </TinderCard>
@@ -262,15 +348,45 @@ function App() {
 
           <div className="action-buttons">
             <button className="btn-circle btn-reject" onClick={() => swipeAction('left')}>✕</button>
+            
+            {currentMovie && (
+              <button className="btn-circle btn-trailer" onClick={() => fetchTrailer(currentMovie.id)}>
+                ▶
+              </button>
+            )}
+            
             <button className="btn-circle btn-heart" onClick={() => swipeAction('right')}>❤</button>
           </div>
 
-          {currentMovie && (
-            <div className={`details-panel ${showDetail ? 'open' : ''}`} onClick={toggleDetail}>
+          {(currentMovie || selectedHistoryMovie) && (
+            <div className={`details-panel ${showDetail ? 'open' : ''}`} onClick={() => {
+                setShowDetail(false);
+                setSelectedHistoryMovie(null);
+            }}>
               <div className="details-content" onClick={e => e.stopPropagation()}>
                 <div className="drag-handle"></div>
-                <h3>{currentMovie.title}</h3>
-                <p className="overview">{currentMovie.overview || "Sinopsis no disponible."}</p>
+                {(() => {
+                    const movieToShow = selectedHistoryMovie || currentMovie;
+                    if (!movieToShow) return null;
+                    return (
+                        <>
+                            <h3>{movieToShow.title}</h3>
+                            <p className="overview">{movieToShow.overview || "Sinopsis no disponible."}</p>
+                            {selectedHistoryMovie && (
+                                <button 
+                                    className="reload-btn" 
+                                    style={{marginTop: '20px', width: '100%', background: '#0070f3'}}
+                                    onClick={() => {
+                                        const query = encodeURIComponent(movieToShow.title);
+                                        window.open(`https://www.google.com/search?q=donde+ver+pelicula+${query}`, '_blank');
+                                    }}
+                                >
+                                    🌐 BUSCAR DÓNDE VER
+                                </button>
+                            )}
+                        </>
+                    )
+                })()}
               </div>
             </div>
           )}
@@ -285,6 +401,21 @@ function App() {
             <p>Habéis coincidido en:</p>
             <h3 style={{fontSize: '1.5rem', margin: '15px 0'}}>{matchMovie.title}</h3>
             <button className="reload-btn" onClick={() => setMatchMovie(null)}>¡A VERLA!</button>
+          </div>
+        </div>
+      )}
+
+      {trailerUrl && (
+        <div className="match-overlay" onClick={() => setTrailerUrl(null)}>
+          <div className="trailer-content" onClick={e => e.stopPropagation()}>
+            <iframe 
+              src={trailerUrl} 
+              title="Movie Trailer" 
+              frameBorder="0" 
+              allow="autoplay; encrypted-media" 
+              allowFullScreen
+            />
+            <button className="reload-btn close-trailer" onClick={() => setTrailerUrl(null)}>CERRAR</button>
           </div>
         </div>
       )}
