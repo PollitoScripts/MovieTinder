@@ -3,6 +3,10 @@ import TinderCard from 'react-tinder-card'
 import './App.css'
 import { db } from './firebase'
 import { ref, set, onValue, push, get } from "firebase/database"
+import { registerSW } from 'virtual:pwa-register'
+
+// Esto registra el Service Worker automáticamente
+registerSW({ immediate: true })
 
 const PROVIDERS = {
   todos: '',
